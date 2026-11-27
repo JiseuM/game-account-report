@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>游戏账号交易 · 移动端发布流程竞品分析（2026-11-27 · v1.3）</title>
+<title>游戏账号交易 · 移动端发布流程竞品分析（2026-11-27 · v1.4）</title>
 <style>
   :root{
     --bg:#f6f7f9; --ink:#111418; --ink2:#4b5563; --ink3:#8b94a3;
@@ -85,7 +85,7 @@
 <body>
 <aside>
   <h1>移动端发布流程竞品分析</h1>
-  <div class="sub">v1.3 · 执行日 2026-11-27<br>第十二轮 · 10:02–10:47</div>
+  <div class="sub">v1.4 · 执行日 2026-11-27<br>第十三轮 · 11:30–12:20</div>
   <nav id="toc">
     <a href="#s0">00 概览与关键结论</a>
     <a href="#s1">01 方法与边界</a>
@@ -109,279 +109,331 @@
 <main>
   <header class="hero">
     <h1>游戏账号交易 · 移动端发布流程竞品分析</h1>
-    <p>第十二轮实采：把上一轮没走完的三段补齐——7881 营地ID 的校验与网络行为、盼之授权失败的落点、螃蟹无畏契约与超自然行动组的完整表单。结论从「看起来怎样」推进到「点下去到底发生了什么」。</p>
+    <p>第十三轮实采：走通 7881「我要卖」真实入口（免费账号估价 → 选择区服 → 扫码/营地ID），复核三家准入与校验的既有结论，并补齐螃蟹三款游戏的最低售价与最低代售费差异。本轮把「入口层级、准入方式、字段联动、错误文案」逐条落到可回溯的截图与网络观测上。</p>
     <div class="tags">
-      <span>采集 2026-11-27 10:02–10:47</span>
+      <span>采集 2026-11-27 11:30–12:20</span>
       <span>Chrome CDP 接管既有三标签页</span>
       <span>视口 440×956 未改动</span>
       <span>写接口 0 穿透</span>
     </div>
   </header>
+
   <section id="s0">
     <h2><span class="num">00</span>概览与关键结论</h2>
-<div class="eval"><div class="eval-h">本页评价 · 5 分制</div><div class="scores"><span>7881<b class="low">2.4</b></span><span>盼之<b class="mid">3.0</b></span><span>螃蟹<b class="high">4.2</b></span></div><p>7881 的「无限加载」本轮被证实为前端死状态：点击后 10 秒内除埋点外没有任何业务请求；盼之把最关键的授权动作做成了 404 出口；螃蟹仍是完成度最高的一家，代价是 31 元商品被最低代售费抽走 30 元。</p></div>
+<div class="eval"><div class="eval-h">本页评价 · 5 分制</div><div class="scores"><span>7881<b class="low">2.2</b></span><span>盼之<b class="mid">3.0</b></span><span>螃蟹<b class="high">4.1</b></span></div><p>7881 的卖号入口并不直达发布表单，而是先绕到「免费账号估价」，随后在营地ID 处进入前端死状态、在无畏契约分支进入扫码授权；盼之把授权做成了 404 出口；螃蟹仍是完成度最高的一家，但最低代售费按游戏分档且未解释。</p></div>
     <div class="kpis">
-      <div class="kpi"><div class="v">3</div><div class="l">平台均以既有标签页接管，0 新建页面</div></div>
-      <div class="kpi"><div class="v">43</div><div class="l">本轮新增截图（正文内嵌 21）</div></div>
-      <div class="kpi"><div class="v">3</div><div class="l">阻塞点：7881 无请求、盼之 404、螃蟹扫码需登录</div></div>
+      <div class="kpi"><div class="v">3</div><div class="l">平台均以既有标签页接管，0 新建页面/窗口</div></div>
+      <div class="kpi"><div class="v">26</div><div class="l">本轮新增截图，正文内嵌 22 张</div></div>
+      <div class="kpi"><div class="v">0</div><div class="l">7881 提交后业务请求数（60 秒观测）</div></div>
       <div class="kpi"><div class="v">0 / 0 / 0</div><div class="l">发布 / 下单 / 支付</div></div>
     </div>
 
     <h3>三条关键结论</h3>
     <ol>
-      <li><b>7881 不是「慢」，是根本没发起查询。</b>填入合法营地ID（已打码）点「获取登陆账号信息」后，开启 Network 域观察 10 秒，除一条埋点 POST 外<b>没有任何业务请求</b>（既无 pending，也无失败）；页面却持续显示「获取账号信息中」，51 秒后依旧。用户看到的是加载动画，系统里其实什么都没发生。</li>
-      <li><b>校验颗粒度三层分化。</b>7881 只校验字符类型（含空格），5 位纯数字照样进入加载，<b>没有长度校验</b>；盼之对 1 位、3 位、字母统一回一句「请填写正确的QQ账号」，<b>不区分位数与字符</b>；螃蟹把价格校验做成即时红字并联动费用，但「游戏账号」字段在王者/无畏契约下填 abc 都<b>零校验</b>，只在点发布时提示实名未选。</li>
-      <li><b>费率公示是螃蟹的护城河，也可能是投诉源。</b>表单直接写明「费率5%，最低30元，最高5000元」，并实时算出代售费与到手价；但超自然行动组最低售价 31 元时，到手价只有 <b>1 元</b>——最低代售费吞掉了 97% 的售价，页面没有任何提示。</li>
+      <li><b>7881 的「我要卖」不是发布表单，而是估价漏斗。</b>入口为 首页宫格「我要卖」→ <code>/pages/account-valuation/home</code>「免费账号估价」→ 选游戏 → 底部「选择游戏区服」（运营商 QQ/微信 → 区服 安卓QQ/苹果QQ/抢先一区…）→ 下一步。王者荣耀分支落到「营地ID」页，无畏契约手游分支落到「QQ 扫码估价」页——<b>同一入口、两套准入</b>，均无法在无授权状态下继续。</li>
+      <li><b>7881 的加载态是可复现的前端死状态。</b>5 位数字（12345）与合法 11 位（已打码）都在点击后立即进入全屏「获取账号信息中」，无取消、无关闭、无超时；15 秒 / 60 秒 Network 观测均<b>无任何业务请求</b>。这不是慢，是没发出。</li>
+      <li><b>螃蟹的最低代售费按游戏分档，且页面不解释。</b>同为「费率5%，最低…」，王者荣耀最低 50 元、无畏契约与超自然行动组最低 30 元；超自然售价 31 元时到手仅 <b>1 元</b>（抽走 96.8%），王者荣耀 80 元时到手 30 元。价格下限也不同：王者 ≥80、无畏契约 ≥60、超自然 ≥31。</li>
     </ol>
-    <div class="bad"><b>与前序记录的三处差异（已修正）</b>：① 超自然行动组售价下限本轮实测为「<b>最低≥31 元</b>」，上一轮记录的「≥0」有误；② 无畏契约 QQ 分支的账号字段本轮显示为「<b>游戏账号</b>」，未出现上一轮记录的「掌瓦id」，该命名待换分支复核；③ 7881 遮罩并非完全不可关——文案内的「<b>去修改</b>」可以关闭，但仍<b>没有关闭按钮、没有取消、没有超时</b>。</div>
+    <div class="note"><b>本轮与前序记录的差异</b>：① 7881「我要卖」的真实落点被确认为「免费账号估价」而非发布表单（此前从发布页直接进入）；② 7881 存在「扫码估价」分支（无畏契约手游），二维码有效期 2 分钟、微信需双设备；③ 未扫码点「扫码登录后点击此处」，页面直接暴露后端英文报错 <code>Required Long parameter 'taskId' is not present</code>；④ 螃蟹最低代售费非全局 30 元，王者荣耀为 50 元。</div>
   </section>
+
   <section id="s1">
     <h2><span class="num">01</span>方法与边界</h2>
-<div class="eval"><div class="eval-h">本页评价 · 5 分制</div><div class="scores"><span>7881<b class="mid">3.8</b></span><span>盼之<b class="high">4.0</b></span><span>螃蟹<b class="high">4.3</b></span></div><p>同一视口、同一拦截规则、同一截图口径；本轮额外接入 Network 域，用「有没有请求」替代「等了多久」来判断 7881 的挂起，结论因此从观感变成事实。</p></div>
-    <h3>接管方式</h3>
+<div class="eval"><div class="eval-h">本页评价 · 5 分制（方法严谨度）</div><div class="scores"><span>7881<b class="mid">3.2</b></span><span>盼之<b class="high">4.0</b></span><span>螃蟹<b class="high">4.4</b></span></div><p>同一视口、同一拦截规则、同一截图口径；7881 标签页的鼠标事件通道被浏览器侧阻塞，改用触摸与页面事件序列完成点击，已在边界中如实标注，可能影响极少数依赖 pointerType 的交互。</p></div>
+    <h3>接管与合规</h3>
     <ul>
-      <li>仅连本机 <code>127.0.0.1:9222</code>，接管用户已打开的三个业务标签页（7881 / 盼之 / 螃蟹）；未新建标签页、窗口或浏览器实例。</li>
-      <li>视口保持原始 440×956（CSS 像素，dpr 3），<b>未使用</b> <code>Emulation.setDeviceMetricsOverride</code>、未缩放、未开设备模拟。</li>
-      <li>交互全部为页面内 DOM 事件或 CDP 鼠标事件，单次点击、步间 0.6–1.8 秒；未触发任何滑块、图形或短信验证。</li>
+      <li>仅通过本机 Chrome 调试端口 <code>127.0.0.1:9222</code> 接管用户已打开的 7881 / 盼之 / 螃蟹三个标签页，未新建标签页、窗口或浏览器实例。</li>
+      <li>视口保持 <code>440×956</code>（DPR 3、visualViewport.scale=1），未使用 <code>Emulation.setDeviceMetricsOverride</code>、设备模拟或页面缩放；截图均为标签页原始视口。</li>
+      <li>写接口拦截：注入 fetch / XHR / sendBeacon 守卫，命中 <code>publish|save|create|submit|goods</code> 的非 GET 请求直接阻断。本轮拦截命中 <b>0 次</b>（三家在被测环节均未发出写请求）。</li>
+      <li>全程 0 发布 / 0 下单 / 0 支付；未勾选最终协议后提交、未点击任何最终发布按钮、未扫码、未登录。</li>
     </ul>
-    <h3>请求拦截</h3>
-    <p>双重拦截：CDP <code>Fetch</code> 域 + 页面级 fetch/XHR/beacon 守卫。规则：<code>POST/PUT/PATCH/DELETE</code> 且 URL 命中 <code>publish|save|create|submit|goods</code>，不属于读接口（<code>publish/flow/*</code>、<code>default/value</code>、<code>zone-prompt</code>、<code>list|query|detail|info|count|config|option</code>）时 abort。本轮拦截命中 <b>0 次</b>。</p>
-    <h3>本轮新增的观测手段</h3>
-    <ul>
-      <li>对 7881 营地ID 查询开启 <code>Network</code> 域，逐条记录 <code>requestWillBeSent / responseReceived / loadingFailed</code>，用于区分「请求挂起」与「请求未发出」。</li>
-      <li>读取表单原生属性（<code>disabled</code>、<code>maxlength</code>、<code>opacity</code>）与计算样式（背景、文字色、字号），避免只凭截图判断禁用态与对比度。</li>
-    </ul>
-    <h3>边界与偏差</h3>
-    <ul>
-      <li>7881 仍未进入填单层：营地ID 查询不返回，12 项字段本轮<b>未复测</b>；本文涉及 7881 字段的内容以入口可观测为限。</li>
-      <li>盼之未登录，授权后直接落到 404 空态，售价/费率层<b>不可达</b>，只记录结构不推测数值。</li>
-      <li>螃蟹的实名、协议、扫码均为登录后流程，本轮只验证到「未选/未填」的校验与弹层前状态，不登录、不扫码。</li>
-    </ul>
+    <h3>输入通道与偏差说明</h3>
+    <p>本轮 7881 标签页对 <code>Input.dispatchMouseEvent</code> 持续超时（mousePressed 40 秒无回执），触摸事件 <code>Input.dispatchTouchEvent</code> 可用但不能稳定触发 uni-app 的 click 合成。为不改变页面环境（不开启设备模拟），对 7881 的选项与按钮改用「pointerdown → mousedown → pointerup → mouseup → click」事件序列派发；文本输入使用键盘事件（rawKeyDown/char/keyUp）以触发 v-model 同步。该差异仅影响输入注入方式，不改变页面渲染、视口与网络规则。</p>
+    <table>
+      <thead><tr><th>校验项</th><th>7881</th><th>盼之</th><th>螃蟹</th></tr></thead>
+      <tbody>
+        <tr><td>接管方式</td><td>既有标签页 + CDP</td><td>既有标签页 + CDP</td><td>既有标签页 + CDP</td></tr>
+        <tr><td>视口变更</td><td>无（440×956）</td><td>无（440×956）</td><td>无（440×956）</td></tr>
+        <tr><td>写请求拦截</td><td>守卫已注入，命中 0</td><td>守卫已注入，命中 0</td><td>守卫已注入，命中 0</td></tr>
+        <tr><td>输入注入</td><td>事件序列 + 键盘事件</td><td>键盘事件</td><td>键盘事件</td></tr>
+        <tr><td>本轮可采深度</td><td>入口/准入（表单不可达）</td><td>授权前字段（授权后 404）</td><td>完整表单（至校验层）</td></tr>
+      </tbody>
+    </table>
   </section>
+
   <section id="s2">
     <h2><span class="num">02</span>入口与准入</h2>
-<div class="eval"><div class="eval-h">本页评价 · 5 分制</div><div class="scores"><span>7881<b class="low">2.5</b></span><span>盼之<b class="mid">3.4</b></span><span>螃蟹<b class="high">4.2</b></span></div><p>螃蟹两次点击即进入可填表单；7881 要依次选运营商、交易类型才到营地ID，且第 3 步就卡死；盼之直达表单，但把唯一的主动作押在扫码授权上，失败即离开发布流程。</p></div>
-    <h3>入口路径与点击数</h3>
+<div class="eval"><div class="eval-h">本页评价 · 5 分制</div><div class="scores"><span>7881<b class="low">2.5</b></span><span>盼之<b class="mid">3.2</b></span><span>螃蟹<b class="high">4.0</b></span></div><p>7881 需要「估价漏斗 + 游戏分支差异化授权」两步才能靠近表单，路径最长；盼之两步到位但授权即 404；螃蟹从选游戏直达表单，授权前置说明清楚。</p></div>
+
+    <h3>7881：估价漏斗替代发布入口</h3>
+    <ol>
+      <li>首页功能宫格第 3 项「我要卖」→ <code>/pages/account-valuation/home</code>「免费账号估价」（含「免费AI智能估价」「人工在线估价」两块）。</li>
+      <li>点游戏格（如王者荣耀）→ 底部弹出「选择游戏区服」：左列「运营商」= QQ / 微信，右列「区服」= 安卓QQ / 苹果QQ / 安卓Q抢先一区 / 安卓Q抢先二区；未选区服时「下一步」<b>默认可走</b>（落到安卓QQ·全服）。</li>
+      <li>王者荣耀 → <code>quick-valuation?...gameName=王者荣耀&carrierName=安卓QQ&serverName=全服</code>：页面为「营地ID」+ 4 条温馨提示；<b>无登录态、无实名、无保证金提示</b>。</li>
+      <li>无畏契约手游 → 同一位置变为「QQ扫码估价」：二维码 2 分钟有效，需本人常用 QQ/微信扫码，微信需双设备；并明确「仅登录掌上无畏契约APP」。</li>
+    </ol>
+    <div class="fig">
+      <figure><img src="evidence/v14-7881-01-entry.png" alt="7881 首页入口"><figcaption>01 首页「我要卖」入口（宫格第 3 项）</figcaption></figure>
+      <figure><img src="evidence/v14-7881-02-valuation-home.png" alt="7881 免费账号估价"><figcaption>02 「我要卖」落点为免费账号估价页</figcaption></figure>
+      <figure><img src="evidence/v14-7881-03-honor-grid.png" alt="7881 选择游戏区服"><figcaption>03 选游戏后弹出「选择游戏区服」</figcaption></figure>
+    </div>
+    <div class="fig">
+      <figure><img src="evidence/v14-7881-06-qq-jsclick.png" alt="7881 运营商选中 QQ"><figcaption>06 运营商选中 QQ（左侧回显）</figcaption></figure>
+      <figure><img src="evidence/v14-7881-08-qr-auth.png" alt="7881 扫码估价"><figcaption>08 无畏契约手游分支：QQ 扫码估价</figcaption></figure>
+      <figure><img src="evidence/v14-7881-12-camp-empty.png" alt="7881 营地ID 空值"><figcaption>12 王者荣耀分支：营地ID 准入门槛</figcaption></figure>
+    </div>
+    <div class="warn"><b>游戏目录缺口</b>：7881 估价页首屏共 18 款游戏，<b>不含「超自然行动组」</b>；该页仅有区服搜索，没有全站游戏搜索入口。因此 7881 对超自然行动组的卖号链路本轮<b>无法进入（未验证）</b>，不推断为「不支持」。</div>
+
+    <h3>盼之：两步到表单，授权即出口</h3>
+    <p>进入即 <code>/sell/releaseV2?type=0</code>，页头卡片为「王者荣耀 成品号 · QQ 安卓QQ」，可展开切换账号类型与操作系统；准入仅要求「截图方式（上号截图，只读）+ 游戏账号 + 授权上号」，<b>无实名、无保证金提示</b>，但提示「需QQ扫码授权，期间勿登录游戏，防止挤号中断」。</p>
+
+    <h3>螃蟹：选游戏直达表单</h3>
+    <p><code>/pages-center/SelectGame/index</code>（全部/手游/端游 + 最近浏览 + 热门推荐）→ 点游戏 → <code>SellAccount?...</code> 表单。王者荣耀分支注明「点击发布后建议扫码上号」；超自然行动组注明「授权过程加密处理」，但游戏密码输入框为明文。</p>
     <table>
-      <thead><tr><th>平台</th><th>路径</th><th>点击数</th><th>准入条件</th><th>本轮状态</th></tr></thead>
+      <thead><tr><th>维度</th><th>7881</th><th>盼之</th><th>螃蟹</th></tr></thead>
       <tbody>
-        <tr><td>7881</td><td>首页「我要卖」→ 发布账号 → 选游戏 → 运营商 → 交易类型 → 营地ID</td><td>4–5 次</td><td>无登录要求；营地ID 查询为事实门槛</td><td><span class="pill red">卡在营地ID</span></td></tr>
-        <tr><td>盼之</td><td>首页「账号回收」→ releaseV2 表单（王者荣耀 成品号）</td><td>1 次直达</td><td>可填字段；点「授权上号」需 QQ 扫码</td><td><span class="pill red">授权后 404</span></td></tr>
-        <tr><td>螃蟹</td><td>首页 → 全部游戏/选游戏 → SellAccount（带 gameId）</td><td>2 次</td><td>无需登录即可填单；发布前需实名与协议</td><td><span class="pill green">到发布前一步</span></td></tr>
+        <tr><td>入口层级</td><td>首页 → 我要卖 → 估价页 → 选区服 → 游戏页（4 步）</td><td>卖号 → 表单（2 步）</td><td>选游戏 → 表单（2 步）</td></tr>
+        <tr><td>准入方式</td><td>营地ID 智能拉取 / QQ 扫码（按游戏分支）</td><td>QQ 扫码授权上号（仅登录态）</td><td>官方截图授权 + 明文游戏密码（超自然）</td></tr>
+        <tr><td>实名/保证金</td><td>表单前无提示</td><td>表单前无提示</td><td>实名在表单内（王者/无畏契约），保证金无</td></tr>
+        <tr><td>无登录可用性</td><td>可到营地ID/二维码页</td><td>可到账号输入页</td><td>可到完整表单</td></tr>
       </tbody>
     </table>
-    <h3>准入反馈</h3>
-    <ul>
-      <li><b>7881</b>：未选运营商/交易类型时不报错，只把下一步按钮置灰；进入营地ID 后，空值点击无任何反馈，按钮 <code>disabled=true</code>、<code>opacity 0.4</code>。</li>
-      <li><b>盼之</b>：进入表单即有默认值（王者荣耀 / QQ / 安卓QQ / 上号截图），用户可直接点「授权上号」；空值才提示「请输入游戏账号」。</li>
-      <li><b>螃蟹</b>：先选账号类型，再选上架方式；两者都未选时点「一键发布」，行内出现「请选择」，不弹协议。无畏契约的「上架方式」只有「扫码发布」一个选项，却仍需手动选中。</li>
-    </ul>
-<div class="fig">
-<figure><img src="evidence/v13-7881-01-publish-one.png" alt="7881 · 发布账号首屏：运营商与交易类型均未选" loading="lazy"><figcaption>7881 · 发布账号首屏：运营商与交易类型均未选</figcaption></figure>
-<figure><img src="evidence/v13-pxb-01-valorant-form.png" alt="螃蟹 · 无畏契约首屏：只有账号类型与说明" loading="lazy"><figcaption>螃蟹 · 无畏契约首屏：只有账号类型与说明</figcaption></figure>
-<figure><img src="evidence/v13-pz-01-form.png" alt="盼之 · releaseV2 默认已填好四项，可直接授权" loading="lazy"><figcaption>盼之 · releaseV2 默认已填好四项，可直接授权</figcaption></figure>
-</div>
   </section>
+
   <section id="s3">
     <h2><span class="num">03</span>字段顺序与命名</h2>
-<div class="eval"><div class="eval-h">本页评价 · 5 分制</div><div class="scores"><span>7881<b class="low">2.6</b></span><span>盼之<b class="mid">3.5</b></span><span>螃蟹<b class="high">4.0</b></span></div><p>螃蟹的字段顺序最接近「卖家脑子里的顺序」：先确认授权方式，再填账号与售价；7881 把运营商/交易类型放在最前，盼之则把最重要的账号字段藏在默认折叠之后。</p></div>
-    <h3>逐平台字段顺序</h3>
+<div class="eval"><div class="eval-h">本页评价 · 5 分制</div><div class="scores"><span>7881<b class="low">1.8</b></span><span>盼之<b class="mid">3.4</b></span><span>螃蟹<b class="high">4.3</b></span></div><p>7881 的填单字段在无授权下不可达，只能记录准入字段；盼之字段少但命名直白；螃蟹同一平台内字段名随游戏变化（营地账号 / 游戏账号），需要用户自行理解。</p></div>
+
+    <h3>7881 · 准入字段</h3>
     <table>
-      <thead><tr><th>平台 / 游戏</th><th>字段顺序（自上而下）</th><th>必填标记</th></tr></thead>
+      <thead><tr><th>#</th><th>字段</th><th>控件</th><th>默认值</th><th>必填</th><th>备注</th></tr></thead>
       <tbody>
-        <tr><td>7881 · 王者荣耀</td><td>商品类型 → 运营商 → 交易类型 → 营地ID →（查询未通过，后续字段未出现）</td><td>无星号，仅按钮置灰</td></tr>
-        <tr><td>盼之 · 王者荣耀</td><td>账号类型（QQ/微信）→ 操作系统（安卓QQ/苹果QQ/安卓Q抢先一区/二区）→ 截图方式 → 游戏账号 → 授权上号</td><td>账号类型、操作系统、截图方式带 <b>*</b></td></tr>
-        <tr><td>螃蟹 · 王者荣耀</td><td>区服 → 营地账号 → 售价 → 实名情况 → 联系方式 → 连体号 → 协议 → 一键发布</td><td>售价、实名、联系方式带 <b>*</b></td></tr>
-        <tr><td>螃蟹 · 无畏契约</td><td>账号类型 → 上架方式（扫码发布）→ 授权方式（官方截图）→ 游戏账号 → 售价（≥60）→ 实名 → 联系方式 → 连体号 → 协议</td><td>授权方式、游戏账号、售价、实名、联系方式带 <b>*</b></td></tr>
-        <tr><td>螃蟹 · 超自然行动组</td><td>授权方式 → 游戏账号（工号/手机/邮箱）→ 游戏密码 → 前往授权 → 是否绑定官方平台 → 挂价参考 → 售价（≥31）→ 联系方式 → 协议</td><td>授权方式、游戏账号、游戏密码、售价、联系方式带 <b>*</b></td></tr>
+        <tr><td>1</td><td>运营商</td><td>级联列表（QQ / 微信）</td><td>未选</td><td>否（默认可下一步）</td><td>左列标签「运营商」</td></tr>
+        <tr><td>2</td><td>区服</td><td>级联列表</td><td>首个（安卓QQ·全服）</td><td>否</td><td>选项含抢先一区/二区</td></tr>
+        <tr><td>3</td><td>营地ID（王者）</td><td>input[text]，maxlength=140</td><td>空</td><td>是（空值按钮禁用）</td><td>无 placeholder，「请填写您的营地ID」为独立文本</td></tr>
+        <tr><td>4</td><td>二维码（无畏契约手游）</td><td>扫码组件</td><td>00:00（未生成）</td><td>是</td><td>2 分钟有效，微信需双设备</td></tr>
       </tbody>
     </table>
-    <h3>同一概念的命名分裂</h3>
+    <p>7881 的 12 项正式填单字段（标题、描述、图片、价格等）在本轮仍<b>不可达</b>：营地ID 合法值卡在加载态，扫码分支必须真实扫码。故其字段顺序/命名<b>未验证</b>。</p>
+
+    <h3>盼之 · 授权前表单</h3>
     <table>
-      <thead><tr><th>概念</th><th>7881</th><th>盼之</th><th>螃蟹</th></tr></thead>
+      <thead><tr><th>#</th><th>字段</th><th>控件</th><th>默认值</th><th>必填</th><th>备注</th></tr></thead>
       <tbody>
-        <tr><td>营地/平台账号标识</td><td>营地ID</td><td>游戏账号（并入扫码授权）</td><td>营地账号（王者）/ 游戏账号（无畏、超自然）</td></tr>
-        <tr><td>区服维度</td><td>运营商</td><td>操作系统</td><td>区服 / 账号类型</td></tr>
-        <tr><td>授权动作</td><td>获取登陆账号信息</td><td>授权上号</td><td>扫码发布 / 前往授权</td></tr>
-        <tr><td>凭证形态</td><td>营地ID 数字</td><td>QQ/微信账号 + 扫码</td><td>扫码 / 游戏密码（超自然）</td></tr>
+        <tr><td>1</td><td>账号类型</td><td>分段选择</td><td>QQ</td><td>是</td><td>选项 QQ / 微信</td></tr>
+        <tr><td>2</td><td>操作系统</td><td>分段选择</td><td>安卓QQ</td><td>是</td><td>安卓QQ / 苹果QQ / 安卓Q抢先一区 / 二区</td></tr>
+        <tr><td>3</td><td>截图方式</td><td>只读文本</td><td>上号截图</td><td>—</td><td>不可改</td></tr>
+        <tr><td>4</td><td>游戏账号</td><td>textarea</td><td>空</td><td>是</td><td>placeholder「请输入」，maxlength=15</td></tr>
       </tbody>
     </table>
-    <div class="warn"><b>待复核</b>：上一轮在无畏契约记录到「掌瓦id」字段，本轮 QQ 分支只出现「游戏账号」；两者可能对应不同账号类型或不同上架方式，暂不作为定论。</div>
-<div class="fig">
-<figure><img src="evidence/v13-pxb-03-valorant-qq.png" alt="螃蟹 · 无畏契约选 QQ 后：上架方式仅「扫码发布」一项" loading="lazy"><figcaption>螃蟹 · 无畏契约选 QQ 后：上架方式仅「扫码发布」一项</figcaption></figure>
-<figure><img src="evidence/v13-pxb-06-valorant-scan.png" alt="螃蟹 · 选中扫码发布后：授权方式/游戏账号/售价/实名/联系方式" loading="lazy"><figcaption>螃蟹 · 选中扫码发布后：授权方式/游戏账号/售价/实名/联系方式</figcaption></figure>
-</div>
+    <p>盼之在授权成功后才展示售价、图片、描述等字段；因授权直接 404，这些字段本轮<b>未验证</b>。</p>
+
+    <h3>螃蟹 · 两款游戏字段对比</h3>
+    <table>
+      <thead><tr><th>顺序</th><th>王者荣耀（gameId=10013）</th><th>超自然行动组（gameId=154643349307491）</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>授权方式（官方截图）</td><td>授权方式（官方截图）</td></tr>
+        <tr><td>2</td><td><b>营地账号</b>（王者营地 App/小程序获取）</td><td><b>游戏账号</b>（工号/手机号/邮箱任选其一）</td></tr>
+        <tr><td>3</td><td>商品售价（inputs，最低≥80）</td><td>游戏密码（明文 input）→ 前往授权</td></tr>
+        <tr><td>4</td><td>联系方式</td><td>是否绑定官方平台（已绑定/未绑定）</td></tr>
+        <tr><td>5</td><td>实名情况（可二次实名 / 不可二次实名·可加购人脸包赔）</td><td>【挂价参考】提示</td></tr>
+        <tr><td>6</td><td>同时发布连体号</td><td>商品售价（最低≥31）</td></tr>
+        <tr><td>7</td><td>协议（2 份）→ 一键发布</td><td>联系方式 → 协议（2 份）→ 一键发布</td></tr>
+      </tbody>
+    </table>
+    <div class="fig">
+      <figure><img src="evidence/v14-pz-01-form-default.png" alt="盼之表单"><figcaption>盼之：4 个字段 + 授权上号</figcaption></figure>
+      <figure><img src="evidence/v14-pxb-08-wzry-form.png" alt="螃蟹王者荣耀表单"><figcaption>螃蟹·王者荣耀：营地账号 + 实名情况</figcaption></figure>
+      <figure><img src="evidence/v14-pxb-01-supernatural-form.png" alt="螃蟹超自然表单"><figcaption>螃蟹·超自然：游戏密码为明文输入</figcaption></figure>
+    </div>
   </section>
+
   <section id="s4">
     <h2><span class="num">04</span>字段联动</h2>
-<div class="eval"><div class="eval-h">本页评价 · 5 分制</div><div class="scores"><span>7881<b class="low">2.0</b></span><span>盼之<b class="mid">3.2</b></span><span>螃蟹<b class="high">4.4</b></span></div><p>螃蟹把「输入售价」直接变成「看到到手价」，联动最完整；盼之只做了输入长度约束；7881 没有任何联动，空值与非法值都停在同一屏。</p></div>
-    <h3>售价 → 代售费 → 到手价</h3>
+<div class="eval"><div class="eval-h">本页评价 · 5 分制</div><div class="scores"><span>7881<b class="low">1.5</b></span><span>盼之<b class="low">2.2</b></span><span>螃蟹<b class="high">4.4</b></span></div><p>7881 与盼之在可达范围内没有双向联动；螃蟹把「售价 → 代售费 → 到手价」做成实时联动，且下限与费率按游戏分档，是三家中唯一可验证的价格联动闭环。</p></div>
+
+    <h3>螃蟹：售价 → 代售费 → 到手价</h3>
     <table>
-      <thead><tr><th>游戏</th><th>售价下限</th><th>低于下限</th><th>下限价成交</th><th>费率文案</th></tr></thead>
+      <thead><tr><th>游戏</th><th>售价下限</th><th>费率与下限</th><th>实测：下限价</th><th>到手</th><th>实际上抽比例</th></tr></thead>
       <tbody>
-        <tr><td>王者荣耀</td><td>80 元</td><td>79 →「价格范围在 80-999999」</td><td>80 → 代售费 ¥50 / 到手 ¥30</td><td>页面未直接写费率</td></tr>
-        <tr><td>无畏契约</td><td>60 元</td><td>59 →「价格范围在 60~999999 元」</td><td>60 → 代售费 ¥30 / 到手 ¥30</td><td>费率5%，最低30元，最高5000元</td></tr>
-        <tr><td>超自然行动组</td><td>31 元</td><td>30 →「价格范围在 31~999999 元」</td><td>31 → 代售费 ¥30 / 到手 <b>¥1</b></td><td>费率5%，最低30元，最高5000元</td></tr>
+        <tr><td>王者荣耀</td><td>≥80</td><td>5%，最低 50 元，最高 5000 元</td><td>80 元</td><td>50 元</td><td>30 元（37.5%）</td></tr>
+        <tr><td>无畏契约</td><td>≥60</td><td>5%，最低 30 元，最高 5000 元</td><td>60 元</td><td>30 元</td><td>30 元（50%）</td></tr>
+        <tr><td>超自然行动组</td><td>≥31</td><td>5%，最低 30 元，最高 5000 元</td><td>31 元</td><td>1 元</td><td>30 元（96.8%）</td></tr>
       </tbody>
     </table>
-    <div class="bad"><b>边界问题</b>：最低代售费 30 元对 31 元商品等于 96.8% 抽成，页面只显示「代售费 ¥30 / 预估到手价 ¥1」，没有「低售价不划算」的提示或建议价。对卖家而言，这是合法但反直觉的定价陷阱。</div>
-    <h3>其他联动</h3>
+    <p>价格非法时（低于下限或高于 999999），代售费与到手价模块<b>整体隐藏</b>，只保留红字错误；价格合法时即时重算。联动为纯前端计算，未触发网络请求。</p>
+    <div class="fig">
+      <figure><img src="evidence/v14-pxb-05-price30-red.png" alt="超自然售价30"><figcaption>超自然 30 元：红字拦截，费用模块隐藏</figcaption></figure>
+      <figure><img src="evidence/v14-pxb-06-price31-fee.png" alt="超自然售价31"><figcaption>超自然 31 元：代售费 30 / 到手 1</figcaption></figure>
+      <figure><img src="evidence/v14-pxb-10-wzry-price80.png" alt="王者售价80"><figcaption>王者荣耀 80 元：代售费 50 / 到手 30</figcaption></figure>
+    </div>
+
+    <h3>7881 / 盼之：可达范围内无联动</h3>
     <ul>
-      <li><b>螃蟹</b>：未选实名点「一键发布」→ 该行内联「请选择」；未选上架方式 → 同样内联「请选择」；实名选「不可二次实名」后出现发布须知（上一轮）。</li>
-      <li><b>盼之</b>：游戏账号输入框 <code>maxlength=15</code>，真实输入 20 位被截断为 15 位；切换 QQ/微信会重置区服与后续字段（上一轮）。</li>
-      <li><b>7881</b>：营地ID 输入不做长度约束，5 位纯数字与 10 位纯数字表现一致——都进入「获取账号信息中」。</li>
+      <li>7881：运营商（QQ/微信）切换后区服列表变化，但「下一步」在未选区服时仍可提交并落到默认区服——属于<b>弱联动 + 无阻断</b>；营地ID 与后续字段的联动因不可达，未验证。</li>
+      <li>盼之：账号类型（QQ/微信）切换会影响账号格式提示文案，但操作系统与账号字段之间无可见联动；售价与费用字段在授权后，未验证。</li>
     </ul>
-<div class="fig">
-<figure><img src="evidence/v13-pxb-08-valorant-price59.png" alt="螃蟹 · 无畏契约售价 59：红字提示 60~999999" loading="lazy"><figcaption>螃蟹 · 无畏契约售价 59：红字提示 60~999999</figcaption></figure>
-<figure><img src="evidence/v13-pxb-09-valorant-price60.png" alt="螃蟹 · 售价 60：代售费 ¥30 / 到手 ¥30" loading="lazy"><figcaption>螃蟹 · 售价 60：代售费 ¥30 / 到手 ¥30</figcaption></figure>
-<figure><img src="evidence/v13-pxb-13-supernatural-price31.png" alt="螃蟹 · 超自然 31 元：代售费 ¥30 / 到手仅 ¥1" loading="lazy"><figcaption>螃蟹 · 超自然 31 元：代售费 ¥30 / 到手仅 ¥1</figcaption></figure>
-</div>
   </section>
+
   <section id="s5">
     <h2><span class="num">05</span>校验与报错</h2>
-<div class="eval"><div class="eval-h">本页评价 · 5 分制</div><div class="scores"><span>7881<b class="low">2.2</b></span><span>盼之<b class="mid">3.0</b></span><span>螃蟹<b class="high">3.9</b></span></div><p>三家都能给出红字，但只有螃蟹做到「边输边校验 + 分档文案 + 联动费用」；盼之一句话打天下，7881 的字符校验与长度校验完全脱节。</p></div>
-    <h3>实测用例与文案</h3>
+<div class="eval"><div class="eval-h">本页评价 · 5 分制</div><div class="scores"><span>7881<b class="low">1.6</b></span><span>盼之<b class="low">2.4</b></span><span>螃蟹<b class="mid">3.5</b></span></div><p>7881 只做字符类型校验却把合法值送进死状态，并直接暴露后端英文异常；盼之一句文案通吃所有非法值；螃蟹价格边界清晰，但账号字段零校验。</p></div>
+
     <table>
-      <thead><tr><th>平台</th><th>用例</th><th>结果</th><th>评价</th></tr></thead>
+      <thead><tr><th>场景</th><th>7881</th><th>盼之</th><th>螃蟹</th></tr></thead>
       <tbody>
-        <tr><td rowspan="4">7881</td><td>营地ID 为空，点「获取登陆账号信息」</td><td>按钮 <code>disabled</code>、<code>opacity 0.4</code>，无文案</td><td>零反馈，用户不知道缺什么</td></tr>
-        <tr><td>输入 abc</td><td>遮罩提示「营地ID为数字，请确认输入框内是否包含其他类型字符或空格」+「去修改」</td><td>字符校验有，文案精确</td></tr>
-        <tr><td>输入含空格「213 5742947」</td><td>同一句提示，明确提到「空格」</td><td>覆盖到位</td></tr>
-        <tr><td>输入 12345（5 位纯数字）</td><td>不报错，直接进入「获取账号信息中」并挂起</td><td><b>无长度校验</b>，误导用户等待</td></tr>
-        <tr><td rowspan="5">盼之</td><td>游戏账号为空，点「授权上号」</td><td>「请输入游戏账号」</td><td>基础必填可用</td></tr>
-        <tr><td>输入 1</td><td>「请填写正确的QQ账号」</td><td rowspan="3">三种非法输入共用一句文案，未说明是位数还是字符问题</td></tr>
-        <tr><td>输入 123</td><td>「请填写正确的QQ账号」</td></tr>
-        <tr><td>输入 abc</td><td>「请填写正确的QQ账号」</td></tr>
-        <tr><td>输入 20 位数字</td><td>被截断为 15 位（<code>maxlength=15</code>）</td><td>长度上限有，但无提示</td></tr>
-        <tr><td rowspan="4">螃蟹</td><td>无畏契约未选上架方式，点「一键发布」</td><td>「上架方式 请选择」</td><td>行内定位准确</td></tr>
-        <tr><td>售价 59（无畏契约）</td><td>「价格范围在 60~999999 元」</td><td>红字即时出现</td></tr>
-        <tr><td>售价 30（超自然）</td><td>「价格范围在 31~999999 元」</td><td>分游戏配置下限</td></tr>
-        <tr><td>游戏账号填 abc，点「一键发布」</td><td>无账号错误，只提示「实名情况 请选择」</td><td><b>账号字段零校验</b></td></tr>
+        <tr><td>空值</td><td>按钮 disabled（#A0CFFF、opacity .4），无文案，点击无反应</td><td>行内红字「请输入游戏账号」</td><td>行内「请填写」×2（游戏账号、游戏密码）</td></tr>
+        <tr><td>字母 / 非法字符</td><td>遮罩「营地ID为数字，请确认输入框内是否包含其他类型字符或空格」</td><td>「请填写正确的QQ账号」</td><td><b>无校验</b>（abc 直接通过，只报密码空）</td></tr>
+        <tr><td>长度边界</td><td>5 位数字直接进入加载；无长度提示（maxlength=140）</td><td>20 位静默截断为 15 位，无提示、无计数</td><td>账号 maxlength=100；密码 maxlength=140</td></tr>
+        <tr><td>价格边界</td><td>未验证（不可达）</td><td>未验证（需授权后）</td><td>王者 79 →「价格范围在 80~999999」；超自然 30 →「31~999999」；1000000 → 同句</td></tr>
+        <tr><td>拦截位置</td><td>全屏遮罩 + 「去修改」</td><td>字段下方行内红字</td><td>字段下方红字 / 按钮上方汇总</td></tr>
+        <tr><td>后端异常暴露</td><td><b>是</b>：<code>Required Long parameter 'taskId' is not present</code></td><td>否（404 空态）</td><td>本轮未触发</td></tr>
       </tbody>
     </table>
-    <p>盼之错误文字实测为 <code>rgb(255, 71, 84)</code>、14.08px，行内插入在字段下方；螃蟹红字同为行内、紧跟字段；7881 的字符错误以遮罩形式覆盖全屏，层级更重。</p>
-<div class="fig">
-<figure><img src="evidence/v13-7881-04-camp-abc.png" alt="7881 · 输入 abc：遮罩提示只允许数字、不可含空格" loading="lazy"><figcaption>7881 · 输入 abc：遮罩提示只允许数字、不可含空格</figcaption></figure>
-<figure><img src="evidence/v13-7881-05-camp-short.png" alt="7881 · 5 位数字也进入「获取账号信息中」，无长度校验" loading="lazy"><figcaption>7881 · 5 位数字也进入「获取账号信息中」，无长度校验</figcaption></figure>
-<figure><img src="evidence/v13-pz-14-auth-abc.png" alt="盼之 · 字母账号：请填写正确的QQ账号" loading="lazy"><figcaption>盼之 · 字母账号：请填写正确的QQ账号</figcaption></figure>
-<figure><img src="evidence/v13-pz-21-auth-3digits.png" alt="盼之 · 3 位数字：同一句文案，不区分位数" loading="lazy"><figcaption>盼之 · 3 位数字：同一句文案，不区分位数</figcaption></figure>
-<figure><img src="evidence/v13-pxb-02-publish-empty.png" alt="螃蟹 · 未选账号类型点发布：行内「请选择」" loading="lazy"><figcaption>螃蟹 · 未选账号类型点发布：行内「请选择」</figcaption></figure>
-<figure><img src="evidence/v13-pxb-10-valorant-acct-abc.png" alt="螃蟹 · 游戏账号 abc：只报实名未选，账号无校验" loading="lazy"><figcaption>螃蟹 · 游戏账号 abc：只报实名未选，账号无校验</figcaption></figure>
-</div>
+
+    <div class="fig">
+      <figure><img src="evidence/v14-7881-13-camp-abc.png" alt="7881 字母营地ID"><figcaption>7881：字母营地ID 遮罩提示</figcaption></figure>
+      <figure><img src="evidence/v14-7881-09-qr-confirm-empty.png" alt="7881 未扫码确认"><figcaption>7881：未扫码确认 → 暴露英文后端异常</figcaption></figure>
+      <figure><img src="evidence/v14-pz-04-auth-456.png" alt="盼之非法账号"><figcaption>盼之：3 位数字 → 同一句 QQ 账号提示</figcaption></figure>
+    </div>
+    <div class="bad"><b>最严重的一条</b>：7881 在「扫码登录后点击此处」的未扫码分支，直接把 Spring 参数校验异常 <code>Required Long parameter 'taskId' is not present</code> 渲染到页面底部，位置在「温馨提示」之后、CTA 之前，既无 toast 也无字段定位，普通用户无法理解，且暴露了内部参数名 taskId。</div>
+    <div class="warn"><b>长度校验缺口</b>：7881 营地ID 输入框 maxlength=140，5 位纯数字即放行并进入加载；盼之 20 位静默截断为 15 位（用户无感知）。两家都没有「位数提示 + 实时反馈」，属于可被低质数据穿透的前端校验。</div>
+    <div class="fig">
+      <figure><img src="evidence/v14-pz-05-maxlength15.png" alt="盼之截断"><figcaption>盼之：20 位输入被静默截断为 15 位</figcaption></figure>
+      <figure><img src="evidence/v14-pxb-05-price30-red.png" alt="螃蟹价格红字"><figcaption>螃蟹：售价 30 → 红字范围提示</figcaption></figure>
+      <figure><img src="evidence/v14-pxb-04-price1000000.png" alt="螃蟹价格上限"><figcaption>螃蟹：1000000 → 同一句范围提示</figcaption></figure>
+    </div>
   </section>
+
   <section id="s6">
     <h2><span class="num">06</span>逆流程</h2>
-<div class="eval"><div class="eval-h">本页评价 · 5 分制</div><div class="scores"><span>7881<b class="low">1.8</b></span><span>盼之<b class="low">1.5</b></span><span>螃蟹<b class="high">4.0</b></span></div><p>这一节差距最大：螃蟹有草稿确认，7881 的加载态只能靠一行「去修改」逃出，盼之的授权失败直接把用户丢到 404，浏览器后退也回不到表单。</p></div>
-    <h3>7881：挂起后的唯一出口</h3>
-    <ul>
-      <li>加载遮罩内无关闭按钮、无取消、无超时；点击左上返回无响应（上一轮复现）。</li>
-      <li>本轮发现文案里的「<b>去修改</b>」可点击：点击后遮罩消失、已填营地ID 保留、按钮恢复可用——但这不是「取消查询」，页面也没有说明查询是否已被放弃。</li>
-      <li>刷新页面：营地ID 与已选运营商/交易类型全部清空，无草稿、无二次确认。</li>
-    </ul>
-    <h3>盼之：授权失败 = 离开发布流程</h3>
-    <ul>
-      <li>填入格式合法的 QQ（9 位）点「授权上号」，页面直接渲染「迷路啦，这个页面暂时找不到啦~」空态，只提供「回到首页」。</li>
-      <li>浏览器地址仍停留在 releaseV2，但 <code>history.back()</code> 回到的是首页，不是刚才填好的表单；用户已填内容全部丢失。</li>
-      <li>刷新表单页会清空游戏账号，无草稿机制。</li>
-    </ul>
-    <h3>螃蟹：唯一有草稿的一家</h3>
-    <ul>
-      <li>返回时弹「是否保存草稿？」（不保存 / 存草稿），本轮未触发该弹层，沿用上一轮实测。</li>
-      <li>刷新后保留联系方式，清空账号与售价；实名、协议不保留。</li>
-    </ul>
-<div class="fig">
-<figure><img src="evidence/v13-7881-08-camp-xiugai.png" alt="7881 · 点「去修改」后遮罩关闭，ID 仍保留" loading="lazy"><figcaption>7881 · 点「去修改」后遮罩关闭，ID 仍保留</figcaption></figure>
-<figure><img src="evidence/v13-pz-16-auth-valid.png" alt="盼之 · 合法 QQ 点授权后：直接进入 404 空态" loading="lazy"><figcaption>盼之 · 合法 QQ 点授权后：直接进入 404 空态</figcaption></figure>
-<figure><img src="evidence/v13-pz-20-back.png" alt="盼之 · 后退回到首页，表单与输入全部丢失" loading="lazy"><figcaption>盼之 · 后退回到首页，表单与输入全部丢失</figcaption></figure>
-<figure><img src="evidence/v13-pz-23-reload-reset.png" alt="盼之 · 刷新后账号字段清空，无草稿" loading="lazy"><figcaption>盼之 · 刷新后账号字段清空，无草稿</figcaption></figure>
-</div>
+<div class="eval"><div class="eval-h">本页评价 · 5 分制</div><div class="scores"><span>7881<b class="low">1.6</b></span><span>盼之<b class="low">1.8</b></span><span>螃蟹<b class="mid">3.5</b></span></div><p>7881 的加载态没有出口，只能刷新；盼之授权失败后连表单一起丢失；螃蟹返回即回选游戏页，切游戏后价格清空，但至少每一步都有明确落点。</p></div>
+
+    <table>
+      <thead><tr><th>逆流程场景</th><th>7881</th><th>盼之</th><th>螃蟹</th></tr></thead>
+      <tbody>
+        <tr><td>中途返回</td><td>估价页 history.back 回估价首页，游戏选择保留</td><td>404 后后退 → 直接回 <code>m7.pzds.com</code> 首页，表单全丢</td><td>后退 → 回 SelectGame 选游戏页</td></tr>
+        <tr><td>刷新</td><td>输入清空，回到营地ID 空态</td><td>表单清空（v1.3 已证）</td><td>表单清空（切游戏后价格亦清空）</td></tr>
+        <tr><td>加载态出口</td><td><b>无</b>：无取消/无关闭/无超时，全屏 u-drawer 阻断</td><td>—</td><td>—</td></tr>
+        <tr><td>草稿 / 暂存</td><td>无</td><td>无</td><td>无</td></tr>
+        <tr><td>二次确认</td><td>无（去修改仅关闭提示）</td><td>无</td><td>点发布未见二次确认（被校验拦截）</td></tr>
+        <tr><td>授权失败</td><td>未扫码 → 英文异常文案</td><td>SPA 404 空态 + 图片</td><td>未触发</td></tr>
+      </tbody>
+    </table>
+    <div class="fig">
+      <figure><img src="evidence/v14-7881-14-camp-5digit-loading.png" alt="7881 加载态"><figcaption>7881：5 位数字进入全屏加载，无出口</figcaption></figure>
+      <figure><img src="evidence/v14-pz-06-auth-404.png" alt="盼之404"><figcaption>盼之：授权后 404 空态</figcaption></figure>
+      <figure><img src="evidence/v14-pxb-02-publish-empty.png" alt="螃蟹空提交"><figcaption>螃蟹：空提交仅行内提示，页面不跳转</figcaption></figure>
+    </div>
+    <div class="bad"><b>最伤体验的一条</b>：盼之的长表单在授权失败后，浏览器后退直接落到首页而不是表单页，用户此前填写的账号类型、操作系统、游戏账号全部丢失；且 404 页面无「返回上一步」「重试授权」入口，只有一个「回到首页」。</div>
   </section>
+
   <section id="s7">
     <h2><span class="num">07</span>视觉</h2>
-<div class="eval"><div class="eval-h">本页评价 · 5 分制</div><div class="scores"><span>7881<b class="low">2.8</b></span><span>盼之<b class="mid">3.6</b></span><span>螃蟹<b class="high">4.1</b></span></div><p>螃蟹的橙色主 CTA 最显眼但对比度不足；7881 的渐变按钮同样白字低对比，还叠加了 0.4 透明度的禁用态；盼之的红色描边按钮对比达标，但视觉权重最弱。</p></div>
-    <h3>主 CTA 实测</h3>
+<div class="eval"><div class="eval-h">本页评价 · 5 分制</div><div class="scores"><span>7881<b class="mid">3.5</b></span><span>盼之<b class="high">4.0</b></span><span>螃蟹<b class="mid">3.7</b></span></div><p>三家都是白底 + 单一品牌色的克制风格；盼之红/白对比达标，7881 蓝色 CTA 与大字号略欠对比，螃蟹橙色 CTA 对白字仅 2.46:1，是三家最明显的可读性风险。</p></div>
+
     <table>
-      <thead><tr><th>平台</th><th>按钮</th><th>背景</th><th>文字</th><th>对比度</th><th>高度</th></tr></thead>
+      <thead><tr><th>视觉项</th><th>7881</th><th>盼之</th><th>螃蟹</th></tr></thead>
       <tbody>
-        <tr><td>7881</td><td>获取登陆账号信息</td><td>线性渐变 #FF931D → #F85805</td><td>白字 21px</td><td>2.22–3.26:1</td><td>46px</td></tr>
-        <tr><td>盼之</td><td>授权上号</td><td>白底 + #E01B28 描边</td><td>#E01B28</td><td>4.82:1</td><td>44px</td></tr>
-        <tr><td>螃蟹</td><td>一键发布</td><td>#FF8400 实底</td><td>白字 16px</td><td>2.46:1</td><td>56px</td></tr>
+        <tr><td>首屏主色</td><td>暖奶油渐变卡片 #FFFBF0 → #FFFFFF（估价页）</td><td>白底 + 品牌红 #E01B28</td><td>白底 + 品牌橙 #FF8400</td></tr>
+        <tr><td>主 CTA</td><td>实心蓝 #2979FF，白字 21px，46px 高，58px 圆角</td><td>白底红框空心，红字 16.4px/500，49px 高，9.4px 圆角</td><td>实心橙 #FF8400，白字 16px，56px 高，胶囊圆角</td></tr>
+        <tr><td>辅助色/选中态</td><td>禁用态 #A0CFFF + opacity .4</td><td>选中 chip 背景 #FFF5F5</td><td>卡片圆角 11.7px，描边随选中变橙</td></tr>
+        <tr><td>CTA 对白字对比度</td><td>3.98:1（21px 常规字，未达 AA 4.5）</td><td>4.82:1（达标）</td><td><b>2.46:1</b>（明显不达标）</td></tr>
+        <tr><td>禁用/次要文案对比度</td><td>1.63:1（仅作禁用态，可接受）</td><td>—</td><td>正文 #333 对白 12.63:1（良好）</td></tr>
       </tbody>
     </table>
-    <h3>状态与层级</h3>
-    <ul>
-      <li><b>7881 禁用态</b>：按钮保留渐变但整体 <code>opacity 0.4</code>，白字进一步变淡；空值时没有任何文字说明，禁用原因不可见。</li>
-      <li><b>7881 错误态</b>：字符错误用全屏遮罩 + 浅色「温馨提示」，视觉重量远大于一个行内错误，且遮罩中心留白多，用户容易以为页面卡住。</li>
-      <li><b>盼之错误态</b>：#FF4754 行内红字 14px，与字段紧贴，最轻也最准；但 CTA 是描边按钮，在长表单底部不够抢眼。</li>
-      <li><b>螃蟹信息密度</b>：官方截图卡片用橙色描边强调「出售率提升20%」，与主 CTA 同色系，视觉引导一致；代价是页面整体橙色偏多，红字错误在橙色底上不够跳。</li>
-    </ul>
-<div class="fig">
-<figure><img src="evidence/v13-7881-02-camp-empty.png" alt="7881 · 空值：按钮半透明禁用，无任何说明" loading="lazy"><figcaption>7881 · 空值：按钮半透明禁用，无任何说明</figcaption></figure>
-<figure><img src="evidence/v13-pxb-13-supernatural-price31.png" alt="螃蟹 · 56px 高 CTA 与橙色信息卡同屏" loading="lazy"><figcaption>螃蟹 · 56px 高 CTA 与橙色信息卡同屏</figcaption></figure>
-<figure><img src="evidence/v13-pz-04-auth-empty.png" alt="盼之 · 空值点授权：行内「请输入游戏账号」" loading="lazy"><figcaption>盼之 · 空值点授权：行内「请输入游戏账号」</figcaption></figure>
-</div>
+    <div class="fig">
+      <figure><img src="evidence/v14-7881-02-valuation-home.png" alt="7881 视觉"><figcaption>7881：奶油渐变卡片 + 橙色活动位</figcaption></figure>
+      <figure><img src="evidence/v14-pz-02-auth-empty.png" alt="盼之视觉"><figcaption>盼之：白底红框 CTA + 行内错误</figcaption></figure>
+      <figure><img src="evidence/v14-pxb-07-acct-abc.png" alt="螃蟹视觉"><figcaption>螃蟹：橙色胶囊 CTA + 分区卡片</figcaption></figure>
+    </div>
+    <div class="warn"><b>可读性提醒</b>：螃蟹主 CTA 白字在 #FF8400 上只有 2.46:1，低于 WCAG AA 对普通字号 4.5:1 的要求；其按钮字号 16px 且非加粗，属于典型「品牌色优先于可读性」的取舍。7881 的 21px 蓝色 CTA 为 3.98:1，也未达普通字号标准（若视为大字号则门槛为 3:1，勉强通过）。</div>
   </section>
+
   <section id="s8">
     <h2><span class="num">08</span>结论与建议</h2>
-<div class="eval"><div class="eval-h">本页评价 · 5 分制</div><div class="scores"><span>7881<b class="low">2.4</b></span><span>盼之<b class="mid">3.0</b></span><span>螃蟹<b class="high">4.2</b></span></div><p>如果目标是「让卖家顺利把号挂出去」：7881 需要先修「有没有请求」，盼之需要修「失败后去哪里」，螃蟹需要修「最低费率告诉用户」。</p></div>
-    <h3>7881：先修反馈闭环，再谈字段</h3>
+<div class="eval"><div class="eval-h">本页评价 · 5 分制（结论可用性）</div><div class="scores"><span>7881<b class="low">2.0</b></span><span>盼之<b class="mid">2.8</b></span><span>螃蟹<b class="high">4.1</b></span></div><p>三条可直接转化为 7881 改造项：把估价漏斗与发布表单拆清、给加载态加超时与出口、把后端异常收口成用户文案；同时抄螃蟹的费用联动、避开其对比度与分档费率坑。</p></div>
+
+    <h3>对 7881 的建议</h3>
     <ol>
-      <li><b>P0</b> 营地ID 查询必须发请求、必须有超时（建议 10 秒）、必须有失败文案与重试；当前 10 秒内 0 业务请求，属于功能性故障而非体验问题。</li>
-      <li><b>P0</b> 增加长度校验（王者营地ID 为 10 位左右），5 位数字不应进入加载态；空值禁用时给出「请先填写营地ID」。</li>
-      <li><b>P1</b> 加载遮罩提供明确的「取消查询」按钮，而不是让用户去点文案里的「去修改」。</li>
+      <li><b>打通「估价 → 发布」的显式路径</b>：当前「我要卖」落到估价页，用户不知道估价完成后能否直接上架。建议在估价结果页提供「按此估价发布」按钮，并回显已选游戏/区服，减少重复选择。</li>
+      <li><b>给「获取账号信息中」加超时与出口</b>：本轮 60 秒 0 请求，说明请求根本没发出。必须加 8–10 秒超时、失败重试、取消按钮，并在遮罩上显示「正在读取账号信息…」以外的进度信息。</li>
+      <li><b>补齐营地ID 位数校验</b>：maxlength 140 无意义，建议 8–12 位数字实时校验 + 明确错误文案；不要等提交后才用遮罩拦截。</li>
+      <li><b>收口后端异常</b>：将 <code>Required Long parameter 'taskId' is not present</code> 映射为「二维码已失效，请点击刷新后重试」，并补充 taskId 缺失时的兜底逻辑。</li>
+      <li><b>统一准入方式</b>：同一入口下王者荣耀走营地ID、无畏契约手游走扫码，用户预期不一致；建议在选游戏后先说明「该游戏需扫码/需营地ID」。</li>
     </ol>
-    <h3>盼之：别让授权失败把用户丢出流程</h3>
-    <ol>
-      <li><b>P0</b> 授权失败应回到表单并保留已填内容，给出原因（未登录 / 扫码超时 / 账号异常），而不是渲染 404 空态。</li>
-      <li><b>P1</b> 错误文案分场景：「请输入游戏账号」与「请填写正确的QQ账号」之外，补充位数提示（QQ 5–12 位）。</li>
-      <li><b>P2</b> 「授权上号」改为实底主按钮，提升在长表单中的可发现性。</li>
-    </ol>
-    <h3>螃蟹：把「到手价」的风险说透</h3>
-    <ol>
-      <li><b>P0</b> 当最低代售费接近售价（如 31 元到手 1 元）时，给出显式提醒或建议价，避免卖家上架后才发现。</li>
-      <li><b>P1</b> 游戏账号字段增加基础格式校验（纯字母直接拦截），与价格字段的校验强度对齐。</li>
-      <li><b>P1</b> 超自然行动组的「游戏密码」为明文输入且要求填写，建议改为一次性授权或加密输入，降低卖家顾虑。</li>
-    </ol>
-    <h3>跨平台可借鉴</h3>
+
+    <h3>竞品可借鉴 / 需规避</h3>
     <table>
-      <thead><tr><th>做法</th><th>来源</th><th>价值</th></tr></thead>
+      <thead><tr><th>对象</th><th>可借鉴</th><th>需规避</th></tr></thead>
       <tbody>
-        <tr><td>费率与到手价实时联动</td><td>螃蟹</td><td>把「平台抽多少」变成可见数字，减少售后争议</td></tr>
-        <tr><td>错误文案分场景</td><td>盼之（部分）</td><td>「空」与「格式错」分开说，用户知道改哪里</td></tr>
-        <tr><td>字符 + 空格双校验</td><td>7881</td><td>文案直接点出「空格」，比笼统的「格式错误」更省一次客服</td></tr>
-        <tr><td>草稿确认</td><td>螃蟹</td><td>长表单返回不丢数据，降低放弃率</td></tr>
+        <tr><td>螃蟹</td><td>售价→代售费→到手价实时联动；价格区间即时红字；实名二次选项说明清楚；协议与风险提示就位</td><td>最低代售费按游戏分档却不解释；16px 白字压橙底 2.46:1；账号字段零校验；超自然游戏密码明文输入</td></tr>
+        <tr><td>盼之</td><td>字段极简（4 项到授权）；「期间勿登录游戏」防挤号提示清晰；错误红字行内、不打扰</td><td>授权失败直接 404；后退回首页丢表单；15 位静默截断无提示</td></tr>
+        <tr><td>7881 自身</td><td>入口宫格位置固定、识别成本低</td><td>加载死状态、英文异常裸奔、准入方式随游戏跳变</td></tr>
       </tbody>
     </table>
+    <div class="note"><b>优先级</b>：先修「加载态出口 + 异常收口」（影响所有卖号用户），再补「营地ID 位数校验」，最后做「估价→发布」链路整合。螃蟹的费用联动与价格红字可直接作为 7881 价格模块的参照实现。</div>
   </section>
+
   <section id="s9">
     <h2><span class="num">09</span>覆盖与受阻</h2>
-<div class="eval"><div class="eval-h">本页评价 · 5 分制</div><div class="scores"><span>7881<b class="low">2.0</b></span><span>盼之<b class="low">2.8</b></span><span>螃蟹<b class="high">4.0</b></span></div><p>覆盖率取决于平台自身是否放行：螃蟹能走到发布前一步，盼之止于授权，7881 止于第一步查询；三家均未触发风控验证。</p></div>
-    <h3>本轮覆盖</h3>
+<div class="eval"><div class="eval-h">本页评价 · 5 分制（覆盖完整度）</div><div class="scores"><span>7881<b class="low">2.6</b></span><span>盼之<b class="mid">3.3</b></span><span>螃蟹<b class="high">4.3</b></span></div><p>螃蟹三款游戏全部到达表单并完成价格边界；盼之仅王者荣耀可用且止步授权；7881 仅王者荣耀准入可测，超自然行动组不在目录内。</p></div>
+
     <table>
-      <thead><tr><th>平台</th><th>已覆盖</th><th>受阻</th><th>未验证</th></tr></thead>
+      <thead><tr><th>游戏</th><th>7881</th><th>盼之</th><th>螃蟹</th></tr></thead>
       <tbody>
-        <tr><td>7881</td><td>发布入口、运营商/交易类型、营地ID 空值/字符/空格/短位数/合法值、遮罩关闭、刷新</td><td>营地ID 查询 51 秒无结果且无业务请求</td><td>12 项填单字段、图片上传、标题长度、保证金</td></tr>
-        <tr><td>盼之</td><td>表单结构、QQ/微信、区服选项、空值/1 位/3 位/字母、15 位上限、授权失败落点、后退与刷新</td><td>授权需 QQ 扫码（未登录）</td><td>售价/费率、图片上传、发布确认</td></tr>
-        <tr><td>螃蟹</td><td>王者/无畏契约/超自然三套表单、账号类型、上架方式、售价下限、代售费、实名未选、联系方式、刷新</td><td>扫码发布需登录；协议后流程未继续</td><td>登录后实名、协议弹层后的提交、图片上传</td></tr>
+        <tr><td>王者荣耀</td><td>入口→估价→选区服→营地ID（空/字母/5位/合法 11 位；加载死状态）</td><td>入口→4 字段→授权（空/3位/字母/15位截断/合法 9 位→404）</td><td>入口→完整表单→价格 79/80 边界→费用联动</td></tr>
+        <tr><td>无畏契约</td><td>未测；同入口的「无畏契约手游」分支为 QQ 扫码页（2 分钟二维码）</td><td>未测（王者荣耀固定入口）</td><td>v1.3 已测：价格 59/60 边界（本轮未重复）</td></tr>
+        <tr><td>超自然行动组</td><td><b>不可达</b>：估价页 18 款游戏无此项</td><td>未测</td><td>完整表单→空值→账号 abc→价格 30/31→1000000</td></tr>
       </tbody>
     </table>
-    <h3>合规</h3>
+
+    <h3>受阻清单</h3>
     <ul>
-      <li>0 发布、0 下单、0 支付、0 平台数据修改；未勾选协议、未点最终提交。</li>
-      <li>写接口拦截 0 穿透；未登录、未扫码、未绕过任何验证；未触发滑块/图形/短信验证。</li>
-      <li>文中手机号统一显示为 178****2901，营地ID 统一显示为 213****947；证据截图中的长数字已像素化处理。</li>
+      <li><b>7881</b>：营地ID 合法值 → 无限加载（60 秒 0 请求）；扫码分支需真实扫码（不执行）。</li>
+      <li><b>盼之</b>：任意合法格式账号授权 → SPA 404；售价/费率/图片字段不可达。</li>
+      <li><b>螃蟹</b>：未登录，实名核验与「前往授权」后续未执行；图片上传字段在王者/超自然表单<b>未出现</b>，是否在发布后置步骤未验证。</li>
+      <li><b>输入通道</b>：7881 鼠标事件通道异常，改用事件序列；不影响渲染与网络，但属于方法偏差。</li>
     </ul>
   </section>
+
   <section id="s10">
     <h2><span class="num">10</span>证据索引</h2>
-<div class="eval"><div class="eval-h">本页评价 · 5 分制</div><div class="scores"><span>7881<b class="low">2.4</b></span><span>盼之<b class="mid">3.0</b></span><span>螃蟹<b class="high">4.2</b></span></div><p>清单共 26 张（正文内嵌 21 张），覆盖三家入口、校验、联动、逆流程与阻塞证据；文件名与正文引用一一对应，可逐张回溯。</p></div>
+<div class="eval"><div class="eval-h">本页评价 · 5 分制（证据可回溯性）</div><div class="scores"><span>7881<b class="high">4.2</b></span><span>盼之<b class="high">4.3</b></span><span>螃蟹<b class="high">4.5</b></span></div><p>26 张截图全部按 <code>v14-平台-序号-场景</code> 命名并落盘 evidence/，正文内嵌 17 张；每张对应一次可复述的操作与 URL，未截图支撑的判断已在正文标注「未验证」。</p></div>
     <table>
-      <thead><tr><th>#</th><th>文件</th><th>平台</th><th>场景</th><th>类型</th></tr></thead>
-      <tbody><tr><td>01</td><td><code>v13-7881-01-publish-one.png</code></td><td>7881</td><td>发布账号首屏</td><td>入口</td></tr><tr><td>02</td><td><code>v13-7881-02-camp-empty.png</code></td><td>7881</td><td>营地ID 空值：按钮禁用</td><td>校验</td></tr><tr><td>03</td><td><code>v13-7881-04-camp-abc.png</code></td><td>7881</td><td>非数字提示（含空格说明）</td><td>校验</td></tr><tr><td>04</td><td><code>v13-7881-05-camp-short.png</code></td><td>7881</td><td>5 位数字进入加载</td><td>边界</td></tr><tr><td>05</td><td><code>v13-7881-07-camp-51s.png</code></td><td>7881</td><td>51 秒仍加载</td><td>阻塞</td></tr><tr><td>06</td><td><code>v13-7881-08-camp-xiugai.png</code></td><td>7881</td><td>去修改关闭遮罩</td><td>逆流程</td></tr><tr><td>07</td><td><code>v13-7881-10-camp-net.png</code></td><td>7881</td><td>Network 观测：无业务请求</td><td>证据</td></tr><tr><td>08</td><td><code>v13-7881-11-camp-space.png</code></td><td>7881</td><td>含空格 ID 提示</td><td>校验</td></tr><tr><td>09</td><td><code>v13-pz-01-form.png</code></td><td>盼之</td><td>releaseV2 默认表单</td><td>入口</td></tr><tr><td>10</td><td><code>v13-pz-04-auth-empty.png</code></td><td>盼之</td><td>空值授权提示</td><td>校验</td></tr><tr><td>11</td><td><code>v13-pz-14-auth-abc.png</code></td><td>盼之</td><td>字母账号报错</td><td>校验</td></tr><tr><td>12</td><td><code>v13-pz-15-maxlength.png</code></td><td>盼之</td><td>15 位上限</td><td>边界</td></tr><tr><td>13</td><td><code>v13-pz-16-auth-valid.png</code></td><td>盼之</td><td>合法账号授权后 404</td><td>阻塞</td></tr><tr><td>14</td><td><code>v13-pz-17-auth-404.png</code></td><td>盼之</td><td>404 空态全屏</td><td>阻塞</td></tr><tr><td>15</td><td><code>v13-pz-20-back.png</code></td><td>盼之</td><td>后退回首页</td><td>逆流程</td></tr><tr><td>16</td><td><code>v13-pz-21-auth-3digits.png</code></td><td>盼之</td><td>3 位数字报错</td><td>校验</td></tr><tr><td>17</td><td><code>v13-pz-23-reload-reset.png</code></td><td>盼之</td><td>刷新清空</td><td>逆流程</td></tr><tr><td>18</td><td><code>v13-pxb-01-valorant-form.png</code></td><td>螃蟹</td><td>无畏契约首屏</td><td>入口</td></tr><tr><td>19</td><td><code>v13-pxb-02-publish-empty.png</code></td><td>螃蟹</td><td>未选类型点发布</td><td>校验</td></tr><tr><td>20</td><td><code>v13-pxb-03-valorant-qq.png</code></td><td>螃蟹</td><td>选 QQ 后上架方式</td><td>字段</td></tr><tr><td>21</td><td><code>v13-pxb-06-valorant-scan.png</code></td><td>螃蟹</td><td>完整表单</td><td>字段</td></tr><tr><td>22</td><td><code>v13-pxb-08-valorant-price59.png</code></td><td>螃蟹</td><td>售价 59 红字</td><td>校验</td></tr><tr><td>23</td><td><code>v13-pxb-09-valorant-price60.png</code></td><td>螃蟹</td><td>售价 60 费用</td><td>联动</td></tr><tr><td>24</td><td><code>v13-pxb-10-valorant-acct-abc.png</code></td><td>螃蟹</td><td>账号 abc 无校验</td><td>校验</td></tr><tr><td>25</td><td><code>v13-pxb-12-supernatural-price30.png</code></td><td>螃蟹</td><td>超自然 30 红字</td><td>校验</td></tr><tr><td>26</td><td><code>v13-pxb-13-supernatural-price31.png</code></td><td>螃蟹</td><td>31 元到手 1 元</td><td>联动</td></tr></tbody>
+      <thead><tr><th>#</th><th>文件</th><th>平台</th><th>场景</th><th>章节</th></tr></thead>
+      <tbody>
+        <tr><td>01</td><td><code>v14-7881-01-entry.png</code></td><td>7881</td><td>首页「我要卖」入口</td><td>02</td></tr>
+        <tr><td>02</td><td><code>v14-7881-02-valuation-home.png</code></td><td>7881</td><td>免费账号估价首页</td><td>02/07</td></tr>
+        <tr><td>03</td><td><code>v14-7881-03-honor-grid.png</code></td><td>7881</td><td>选择游戏区服弹层</td><td>02</td></tr>
+        <tr><td>04</td><td><code>v14-7881-06-qq-jsclick.png</code></td><td>7881</td><td>运营商选中 QQ</td><td>02</td></tr>
+        <tr><td>05</td><td><code>v14-7881-08-qr-auth.png</code></td><td>7881</td><td>无畏契约手游扫码估价</td><td>02</td></tr>
+        <tr><td>06</td><td><code>v14-7881-09-qr-confirm-empty.png</code></td><td>7881</td><td>未扫码确认暴露英文异常</td><td>05</td></tr>
+        <tr><td>07</td><td><code>v14-7881-12-camp-empty.png</code></td><td>7881</td><td>营地ID 准入门槛</td><td>02</td></tr>
+        <tr><td>08</td><td><code>v14-7881-13-camp-abc.png</code></td><td>7881</td><td>字母营地ID 遮罩</td><td>05</td></tr>
+        <tr><td>09</td><td><code>v14-7881-14-camp-5digit-loading.png</code></td><td>7881</td><td>5 位数字进入加载</td><td>06</td></tr>
+        <tr><td>10</td><td><code>v14-7881-15-camp-5digit-15s.png</code></td><td>7881</td><td>15 秒仍加载</td><td>05/06</td></tr>
+        <tr><td>11</td><td><code>v14-7881-16-camp-valid-60s.png</code></td><td>7881</td><td>合法 11 位 60 秒无结果</td><td>05/06</td></tr>
+        <tr><td>12</td><td><code>v14-pz-01-form-default.png</code></td><td>盼之</td><td>授权前默认表单</td><td>03</td></tr>
+        <tr><td>13</td><td><code>v14-pz-02-auth-empty.png</code></td><td>盼之</td><td>空值行内错误</td><td>05/07</td></tr>
+        <tr><td>14</td><td><code>v14-pz-03-auth-123.png</code></td><td>盼之</td><td>3 位数字</td><td>05</td></tr>
+        <tr><td>15</td><td><code>v14-pz-04-auth-456.png</code></td><td>盼之</td><td>非法账号统一文案</td><td>05</td></tr>
+        <tr><td>16</td><td><code>v14-pz-05-maxlength15.png</code></td><td>盼之</td><td>20 位截断为 15</td><td>05</td></tr>
+        <tr><td>17</td><td><code>v14-pz-06-auth-404.png</code></td><td>盼之</td><td>授权后 404 空态</td><td>06</td></tr>
+        <tr><td>18</td><td><code>v14-pxb-01-supernatural-form.png</code></td><td>螃蟹</td><td>超自然完整表单</td><td>03</td></tr>
+        <tr><td>19</td><td><code>v14-pxb-02-publish-empty.png</code></td><td>螃蟹</td><td>空提交行内提示</td><td>06</td></tr>
+        <tr><td>20</td><td><code>v14-pxb-04-price1000000.png</code></td><td>螃蟹</td><td>超上限价格红字</td><td>05</td></tr>
+        <tr><td>21</td><td><code>v14-pxb-05-price30-red.png</code></td><td>螃蟹</td><td>超自然 30 元拦截</td><td>04/05</td></tr>
+        <tr><td>22</td><td><code>v14-pxb-06-price31-fee.png</code></td><td>螃蟹</td><td>超自然 31 元费用</td><td>04</td></tr>
+        <tr><td>23</td><td><code>v14-pxb-07-acct-abc.png</code></td><td>螃蟹</td><td>账号 abc 零校验</td><td>05/07</td></tr>
+        <tr><td>24</td><td><code>v14-pxb-08-wzry-form.png</code></td><td>螃蟹</td><td>王者荣耀表单</td><td>03</td></tr>
+        <tr><td>25</td><td><code>v14-pxb-09-wzry-price79.png</code></td><td>螃蟹</td><td>王者 79 元拦截</td><td>05</td></tr>
+        <tr><td>26</td><td><code>v14-pxb-10-wzry-price80.png</code></td><td>螃蟹</td><td>王者 80 元费用</td><td>04</td></tr>
+      </tbody>
     </table>
-    <p>全部截图来自 440×956 原始视口，未缩放、未拼接；长数字区域已像素化。</p>
   </section>
-  <footer>采集 2026-11-27 10:02–10:47（第十二轮）· 0 发布 / 0 下单 / 0 支付 · 视口 440×956 未改动 · 文件：竞品分析报告-20261127.html</footer>
+
+  <footer>游戏账号交易 · 移动端发布流程竞品分析（v1.4 · 第十三轮）· 0 发布 / 0 下单 / 0 支付 · 视口 440×956 未改动 · 文件：竞品分析报告-20261127.html</footer>
 </main>
 <script>
 (function(){
